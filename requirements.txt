@@ -1,0 +1,20 @@
+# ============================================================================
+# Project: Enterprise-Grade Data Ingestion & ELT Pipeline
+# Author: Aiham Sadeq Alqasem
+# Required Environment: Python >= 3.12
+# ============================================================================
+
+# Core Dependencies for Database Connectivity and Data Processing
+pymongo>=4.4.0
+pyspark>=3.5.1
+Python >= 3.12
+
+# ============================================================================
+# Technical Notes for Contributors:
+# 1. Standard Libraries: Modules such as os, sys, json, csv, re, time, 
+#    and datetime are part of the Python Standard Library and require 
+#    no separate installation.
+# 2. Spark-MongoDB Connector: The required Java/Scala connector 
+#    (org.mongodb.spark:mongo-spark-connector) is dynamically fetched 
+#    at runtime by PySpark via the 'spark.jars.packages' configuration.
+# ============================================================================
