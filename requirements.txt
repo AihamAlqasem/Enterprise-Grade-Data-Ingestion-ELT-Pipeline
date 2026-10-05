@@ -1,31 +1,19 @@
-# ============================================================================
-# Project: Enterprise-Grade Data Ingestion & ELT Pipeline
-# Author: Aiham Sadeq Alqasem
-# Required Environment: Python >= 3.12
-# ============================================================================
+# FastAPI API
+fastapi==0.128.0
+uvicorn[standard]==0.39.0
 
-# Core Dependencies for Database Connectivity and Data Processing
-pymongo>=4.4.0
-pyspark>=3.5.1
-Python >= 3.12
-# ==========================================
-# Big Data ELT Pipeline & Analytics API
-# ==========================================
+# MongoDB
+pymongo==4.17.0
 
-# 1. API & Web Framework (Phase 2)
-fastapi>=0.100.0
-uvicorn>=0.23.0
-pydantic>=2.0.0
+# Big Data Processing
+pyspark==3.4.1
 
+# Scheduled Jobs
+schedule==1.2.2
 
-# 4. Background Job Scheduler
-apscheduler>=3.10.0
-# ============================================================================
-# Technical Notes for Contributors:
-# 1. Standard Libraries: Modules such as os, sys, json, csv, re, time, 
-#    and datetime are part of the Python Standard Library and require 
-#    no separate installation.
-# 2. Spark-MongoDB Connector: The required Java/Scala connector 
-#    (org.mongodb.spark:mongo-spark-connector) is dynamically fetched 
-#    at runtime by PySpark via the 'spark.jars.packages' configuration.
-# ============================================================================
+# Environment Variables
+python-dotenv==1.2.1
+
+# Testing
+pytest==8.4.2
+httpx==0.28.1

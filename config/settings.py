@@ -1,0 +1,31 @@
+import os
+
+# تحديد المسار الرئيسي للمشروع
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# مسارات مجلدات البيانات والتقارير
+DATA_DIR = os.path.join(BASE_DIR, 'data')
+REPORTS_DIR = os.path.join(BASE_DIR, 'reports')
+# ---------------------------------------------------------
+DYNAMIC_INPUT_FILE = os.environ.get("PIPELINE_INPUT_FILE", "")
+
+# مسار ملف التقارير (مطلوب لحفظ المقاييس)
+RESULTS_FILE = os.path.join(REPORTS_DIR, 'results.json')
+
+# التأكد من وجود مجلد التقارير
+os.makedirs(REPORTS_DIR, exist_ok=True)
+
+# 1. إعدادات الموجه (File Router) - (تم إصلاح التعليق هنا)
+SMALL_FILE_THRESHOLD_MB = 200.0
+
+# 2. إعدادات قاعدة البيانات MongoDB
+MONGO_URI = "mongodb://localhost:27017/"
+DB_NAME = "for_test"
+
+# المجموعات (Collections) كما طلبها الدكتور بالضبط
+RAW_COLLECTION = "orders_raw"
+VALIDATED_COLLECTION = "orders_validated"
+QUARANTINE_COLLECTION = "orders_quarantine"
+
+# 3. إعدادات المعالجة
+BATCH_SIZE = 5000  # حجم الدفعة لمعالجة Python Batch
