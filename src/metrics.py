@@ -36,22 +36,3 @@ def save_run_metrics(metrics_data):
         json.dump(existing_data, f, ensure_ascii=False, indent=4)
     
     print(f"\n✅ تم حفظ تقرير العملية بنجاح في: reports/results.json")
-
-if __name__ == "__main__":
-    # كود اختباري مصغر لتعمل الدالة بضغطة زر Run للتأكد من عملها
-    sample_metric = {
-        "id_run": "test-1234-5678",
-        "execution_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "file_name": "test_sample.csv",
-        "used_engine": "pyspark",
-        "metrics": {
-            "total_records_inserted": 30000000,
-            "total_time_seconds": 733.70,
-            "throughput_records_per_second": 40888.47,
-            "partitions_used": 99
-        },
-        "status": "Success"
-    }
-    
-    print("Testing metrics writer...")
-    save_run_metrics(sample_metric)
