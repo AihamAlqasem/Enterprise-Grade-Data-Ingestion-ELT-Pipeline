@@ -13,7 +13,7 @@ SMALL_FILE_THRESHOLD_MB = 200
 # -----------------------------------------
 # تأكد أن اسم الملف الضخم هنا يطابق الاسم الفعلي الموجود في مجلد data
 HUGE_CSV_PATH = os.path.join(BASE_DIR, "data", "orders_huge_mixed_quality.csv")
-SAMPLE_CSV_PATH = os.path.join(BASE_DIR, "data", "sample_orders.csv")
+SAMPLE_CSV_PATH = os.path.join(BASE_DIR, "data", "01_student_test_small.csv")
 
 # عدد صفوف العينة
 SAMPLE_ROWS = 100000
