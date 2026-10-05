@@ -11,418 +11,917 @@ This project is a highly robust, scalable, and fully modular End-to-End Big Data
 
 The system leverages the power of **Apache Spark (PySpark)** for distributed data processing and **MongoDB** for flexible, document-based storage. It features an intelligent routing system, Idempotent ELT architecture, Materialized Views with incremental refreshes, and a fully interactive **FastAPI (Swagger UI)** dashboard for seamless execution.
 
-### End-to-End Processing Flow
+### Midterm Phase — Data Engineering and ELT
 
-The pipeline follows this order:
+- Read CSV input files.
+- Automatically select the appropriate processing engine.
+- Use Python Batch for small files.
+- Use PySpark for large files.
+- Load raw data into MongoDB.
+- Clean, validate, and standardize records.
+- Correct errors that can be fixed safely.
+- Quarantine records that contain critical errors.
+- Save execution metrics and processing reports.
 
-1. **Input Data:** Users place their `.csv` dataset in the `data/` folder.
-2. **File Size Inspection:** The system analyzes the selected file size.
-3. **Automatic Routing:** The `file_router.py` Decision Engine selects the appropriate ingestion engine.
-4. **Raw Storage:** The selected engine stores all records strictly as-is in `orders_raw`, preserving anomalies and adding tracking metadata.
-5. **ELT Processing:** PySpark reads from `orders_raw`, applies the schema and data quality rules, and classifies every record.
-6. **Validated Storage:** Valid and corrected records are written to `validated_orders` using Idempotent Upsert logic.
-7. **Quarantine Isolation:** Unrecoverable records are isolated in `orders_quarantine` with explicit validation reasons.
-8. **Analytics & Optimization:** The validated data is used for queries, indexes, aggregations, materialized views, scheduled jobs, and the FastAPI dashboard.
+### Final Phase — Data Analytics and API
 
-```text
-+-----------------------------------------------------------------------+
-|                         CSV DATA INPUT                               |
-|          Dataset is placed in the data/ directory                     |
-+-----------------------------------+-----------------------------------+
-                                    |
-                                    v
-                    [ file_router.py Decision Engine ]
-                         File Size Inspection
-                                    |
-                 +----------------+----------------+
-                 |                                 |
-          Size < 200MB                       Size > 200MB
-                 |                                 |
-                 v                                 v
-     [ Python Batch Loader ]             [ PySpark Loader ]
-       Streaming / Chunking              Distributed Processing
-                 +----------------+----------------+
-                                  |
-                                  v
-+-----------------------------------------------------------------------+
-|                 RAW STORAGE: orders_raw                               |
-|        Records are stored strictly "as-is" with metadata             |
-+-----------------------------------+-----------------------------------+
-                                    |
-                                    v
-+-----------------------------------------------------------------------+
-|              ELT: Extract, Load, Transform                            |
-|       Schema Validation & Data Quality Rules                           |
-+----------------------+----------------------------+-------------------+
-                       |                            |
-                       v                            v
-             Valid / Corrected Records       Unrecoverable Records
-                       |                            |
-                       v                            v
-          [ validated_orders ]             [ orders_quarantine ]
-                       |
-                       v
-+-----------------------------------------------------------------------+
-| Phase 3: Queries, Aggregations, Materialized Views, Jobs & FastAPI    |
-+-----------------------------------------------------------------------+
-```
+- Create practical indexes and queries.
+- Measure index impact with `explain("executionStats")`.
+- Build aggregation reports using real database data.
+- Build materialized views with incremental refresh.
+- Create scheduled jobs with execution logs.
+- Provide a FastAPI interface for unified testing.
+- Document installation, configuration, execution, and testing.
+
+The API is not a separate backend implementation. It is a **thin execution layer** that calls the existing project functions, as required by the project specification.
 
 ---
 
-## ✅ 2. Full Technical Implementation Checklist
+## 2. Project Objectives
 
-### Phase 1: Core Hybrid ELT Pipeline & Data Quality Engine
+The project is designed to:
 
-- **Small & Medium Dataset Automatic Routing:** Selects Python Batch (`load_with_python_batch`) automatically when file size `<= 200 MB`.
-- **Large Dataset Automatic Routing:** Selects PySpark Distributed (`load_with_pyspark`) automatically when file size `> 200 MB`.
-- **100% Raw Ingestion First:** All records land first in `orders_raw`, preserving anomalies and enriching each record with `run_id`, `source_file`, and `engine_used`.
-
-#### Data Quality & Cleaning Rules
-
-- **Arabic-Indic Numerals:** Converts `٥٠٠٠` → `5000` and Arabic words (`خمسة آلاف`) to digits.
-- **Currency Normalization:** Standardizes `ريال يمني`, `YR`, `ريال` to `YER`.
-- **Yemeni Phone E.164 Format:** Normalizes local variants to `+9677....`.
-- **Email Syntax Repair:** Fixes duplicate `@` or dots (`user@@mail..com` → `user@mail.com`).
-- **Date Standardization:** Normalizes mixed date formats to `YYYY-MM-DD`.
-- **Items JSON Recalculation:** Parses JSON, ensures positive quantities, calculates row subtotals, and verifies the final `total_amount`.
-- **Audit Trail on Corrected Records:** Every repaired field is logged inside the `corrections` array within the document.
-- **Quarantine Isolation with Reasons:** Unrecoverable records are isolated in `orders_quarantine` with an array of explicit `validation_errors`.
-- **Zero-Duplication Idempotent Upsert:** Enforces a Unique Index on `order_id` in `validated_orders` and writes using Upsert mechanisms to safely handle re-runs.
-
-### Phase 2: Analytics, Incremental MVs, Scheduled Jobs & Unified API
-
-1. **Queries, Indexes & Explain:** 5 practical queries, 3 indexes (including `idx_city_status` Compound Index). Includes a benchmarking function that drops indexes, runs `explain("executionStats")` (**BEFORE**), builds indexes, runs again (**AFTER**), and outputs the comparison.
-2. **The 5 Independent Aggregation Reports (`src/analytics_reports.py`):**
-   - `orders_by_status`: Analyzes order count distribution across statuses.
-   - `top_cities`: Computes total revenue and orders grouped by city.
-   - `top_customers`: Ranks VIP customers by total spent and order count.
-   - `payment_methods`: Analyzes revenue by payment method.
-   - `delivery_types`: Tracks the performance of delivery options.
-3. **Materialized Views & Incremental Refresh (`src/materialized_views.py`):**
-   - `mv_daily_sales_summary`: Pre-aggregated daily revenue and order counts.
-   - `mv_payment_method_summary`: Pre-aggregated payment method performance.
-   - **How Incremental Refresh Works:** Each view queries MongoDB for the `$max: "$processed_at"` value. On refresh, the engine filters `validated_orders` for records processed after this timestamp. It then uses the `$merge` pipeline stage with `whenMatched` to atomically `$add` new totals to existing data without rebuilding from scratch.
-4. **Scheduled Jobs & Execution Audit Logging (`src/scheduler.py`):**
-   - `job_refresh_daily_sales` & `job_refresh_payment_methods`: Scheduled via APScheduler.
-   - **Audit Logging:** Every scheduled or manual run logs `job_name`, `start_time`, `end_time`, `duration_seconds`, and `status` (`SUCCESS/FAILED`) directly to the `job_logs` MongoDB collection.
-5. **Unified FastAPI Server (`src/main.py`):** Comprehensive JSON endpoints, auto-expanded Swagger UI at `/docs`, dynamic dropdowns (Enums) for easy report selection, and an interactive Terminal CLI Launcher.
+- Build a reusable data-processing pipeline.
+- Accept different input files without relying on fixed file names or record counts.
+- Separate data into raw, validated, and quarantined layers.
+- Apply traceable data-quality rules.
+- Use MongoDB for storage, querying, indexing, and aggregation.
+- Demonstrate the effect of indexes instead of only creating them.
+- Produce meaningful analytical reports.
+- Maintain reusable materialized results.
+- Support both manual and scheduled job execution.
+- Make evaluation easy through Swagger UI and JSON responses.
 
 ---
 
-## 📂 3. Project Architecture & Directory Structure
+## 4. System Architecture
 
-The project is structurally divided into logical modules ensuring maintainability and scalability:
+📄 [CSV Input File]
+      │
+      ▼
+🔀 (File Router)
+      │
+      ├──── [Small file] ────> 🐍 Python Batch
+      │
+      └──── [Large file] ────> ⚡ PySpark ELT
+                                     │
+                                     ▼
+                             🗄️ (Raw Collection)
+                                     │
+                                     ▼
+                             ⚖️ {Quality Rules}
+                            /        │        \
+                          /          │          \
+                        ▼            ▼            ▼
+      ✅ orders_validated   🛠️ corrected   🚫 orders_quarantine
+               │
+               ▼
+      📊 [Queries + Aggregations + Materialized Views]
+               │
+               ▼
+          🚀 [FastAPI]
+               │
+               ▼
+        🌐 [Swagger / JSON]
+
+### 4.1 Data layers and collections
+
+- `orders_raw`: stores records immediately after ingestion.
+- `orders_validated`: stores valid records and records successfully corrected.
+- `orders_quarantine`: stores records with critical or unsafe-to-correct errors.
+- `jobs_log`: stores scheduled-job execution history.
+- `daily_sales_mv`: materialized daily summary.
+- `city_sales_mv`: materialized city-level summary.
+
+---
+
+## 5. Repository Structure
 
 ```text
-MIDTERM-DATA-PIPELINE/
+midterm-data-pipeline/
 │
 ├── config/
-│   └── settings.py                 # Global configuration, thresholds, and MongoDB URIs
+│   └── settings.py                 # Application and database settings
 │
-├── data/                           # 📥 Drop your CSV files here dynamically!
-│   ├── sample_orders.csv
-│   └── orders_huge_mixed_quality.csv
+├── data/                           # CSV input files
+├── docs/                           # Documentation and supporting files
+├── reports/                        # JSON reports and execution outputs
 │
-├── reports/
-│   └── results.json                # Automated master execution logs and metrics
+├── src/
+│   ├── api.py                      # FastAPI application
+│   ├── main.py                     # Main pipeline orchestrator
+│   ├── load_batch.py             # Python Batch engine
+│   ├── spark_load.py             # PySpark engine
+│   ├── spark_etl_pipeline.py       # ELT and transformation stages
+│   ├── quality_rules.py            # Data-quality and cleaning rules
+│   ├── db_loader.py                # MongoDB loading functions
+│   ├── indexes.py               # Index creation
+│   ├── queries.py               # Queries and explain statistics
+│   ├── aggregations_final.py    # Aggregation reports
+│   ├── materialized_views.py    # Materialized views and refresh
+│   ├── scheduled_jobs.py        # Scheduled jobs and job logs
+│   ├── create_small_sample.py      # Small test-data generator
+│   └── reset_db.py                 # Optional database reset utility
 │
-└── src/
-    ├── analytics_reports.py        # MongoDB Aggregation pipelines (Top Cities, Customers, etc.)
-    ├── batch_loader.py             # Streaming Python Batch Loader (for files < 200MB)
-    ├── create_small_sample.py      # Utility script for testing
-    ├── database_queries.py         # Advanced Queries, Indexing, and ExecutionStats (Explain)
-    ├── file_router.py              # Dynamic File Router (Decision Engine)
-    ├── main.py                     # 🌟 Main entry point (CLI Menu & FastAPI Web Server)
-    ├── materialized_views.py       # Incremental Refresh Logic via $merge
-    ├── metrics.py                  # Standardized metrics logging utility
-    ├── scheduler.py                # APScheduler integration for automated background jobs
-    ├── spark_elt_pipeline.py       # Core Phase 2: Schema validation, Correction & Quarantining
-    └── spark_loader.py             # Massive Parallel Loader using PySpark (for files > 200MB)
+├── .env.example                    # Environment-variable template
+├── requirements.txt                # Python dependencies
+└── README.md                    # documentation
 ```
-
 ---
 
-## ⚙️ 4. Configuration (`config/settings.py`)
+## 6. Environment Setup
 
-The pipeline is highly configurable. The central `settings.py` manages thresholds, paths, and database connections.
+### 6.1 Prerequisites
 
-```python
-import os
+- Python 3.8 or later.
+- MongoDB running on port `27017`.
+- Apache Spark and PySpark for large-file processing.
+- A compatible Java installation for Spark.
+- A local MongoDB connection.
 
-# Main project directory (calculated dynamically)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+### 6.2 Install dependencies
 
-# -----------------------------------------
-# File Router Settings
-# -----------------------------------------
-SMALL_FILE_THRESHOLD_MB = 200
-
-# -----------------------------------------
-# File Paths
-# -----------------------------------------
-HUGE_CSV_PATH = os.path.join(BASE_DIR, "data", "orders_huge_mixed_quality.csv")
-SAMPLE_CSV_PATH = os.path.join(BASE_DIR, "data", "sample_orders.csv")
-
-SAMPLE_ROWS = 100000
-
-# -----------------------------------------
-# MongoDB Database Settings
-# -----------------------------------------
-MONGO_URI = "mongodb://localhost:27017/" 
-MONGO_DB_NAME = "for_test"
-RAW_COLLECTION_NAME = "orders_raw"
-
-# -----------------------------------------
-# Python Batch Loader Engine Settings
-# -----------------------------------------
-BATCH_SIZE = 5000 # Records per batch chunk
-
-# -----------------------------------------
-# PySpark Engine Settings
-# -----------------------------------------
-SPARK_MONGO_OUTPUT_URI = f"{MONGO_URI}{MONGO_DB_NAME}.{RAW_COLLECTION_NAME}"
-SPARK_MONGO_PACKAGES = "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1"
-```
-
----
-
-## 🔄 5. Stage 1: Data Input, File Size Inspection & Dynamic Routing
-
-To begin the pipeline, users simply drop their dataset (`.csv`) into the `data/` folder. The system dynamically reads available files and presents them in the Interactive Interfaces.
-
-### The `file_router.py` Decision Engine
-
-Once a file is selected, the **File Router** analyzes the file size and routes it to the appropriate engine:
-
-1. **Size < 200MB:** Routed to `batch_loader.py`. It uses a highly efficient Python Streaming approach (chunking) to ingest data without overloading RAM.
-2. **Size > 200MB:** Routed to `spark_loader.py`. It bypasses single-thread limitations and utilizes PySpark for parallel, distributed ingestion directly into the raw collection.
-
----
-
-## 📥 6. Stage 2: Raw Ingestion & Storage (`orders_raw`)
-
-Regardless of the engine used, data is stored in the raw collection strictly **"as-is"** to preserve data anomalies for later auditing, accompanied by crucial tracking metadata:
-
-```json
-{
-  "_id": "ObjectId('6ac33a04a9cf1980e7a5ab05')",
-  "run_id": "ed90f294-704c-4630-92b1-1093b2d8dfc7",
-  "source_file": "sample_orders.csv",
-  "source_row_number": 1,
-  "ingested_at": "ISODate('2026-10-05T05:47:48.435Z')",
-  "engine_used": "python_batch",
-  "raw_record": {
-    "order_id": "طلب-100000",
-    "order_date": "2025-02-24T21:29:00",
-    "status": "مؤكد",
-    "customer_id": "عميل-0",
-    "customer_name": "محمد علي",
-    "customer_phone": "702390941",
-    "customer_email": "user141764@example.com",
-    "city": "تعز",
-    "district": "شعوب",
-    "delivery_type": "سريع",
-    "delivery_cost": "5000.0",
-    "payment_method": "محفظة إلكترونية",
-    "payment_status": "تم الدفع",
-    "payment_amount": "769000.0",
-    "currency": "YER",
-    "total_amount": "769000.0",
-    "items_json": "[{\"sku\":\"SKU-1010\",\"name\":\"هاتف سامسونج A54\",\"qty\":-2,\"unit_price\":183000.0,\"total\":549000.0},{\"sku\":\"SKU-1010\",\"name\":\"هاتف سامسونج A54\",\"qty\":1,\"unit_price\":215000.0,\"total\":215000.0}]"
-  }
-}
-```
-
-### 📊 Ingestion Metrics Example
-
-Upon successful ingestion, the system generates comprehensive metrics:
-
-```json
-{
-  "run_id": "db1ebcf9-8a02-470e-872a-d9c6632806d5",
-  "execution_date": "2026-10-05 15:13:41",
-  "phase": "Ingestion_Python_Batch",
-  "metrics": {
-    "total_records_inserted": 50000,
-    "total_time_seconds": 1.62,
-    "throughput_records_per_second": 30928.48,
-    "batch_size_partitions": 5000,
-    "upsert_inserted_count": 50000,
-    "upsert_updated_count": 0,
-    "upsert_unchanged_count": 0,
-    "mode": "insert_many (Streaming Mode)",
-    "collection": "orders_raw"
-  },
-  "status": "Success"
-}
-```
-
----
-
-## 🛠️ 7. Stage 3: ELT Validation, Transformation & Classification
-
-The ELT pipeline leverages **PySpark** to read from `orders_raw`. It applies a strict Schema and subjects every record to complex Data Quality Rules.
-
-### Valid & Corrected Records (`orders_validated`)
-
-If a record fails the initial validation, the system attempts to fix it using 8 complex correction rules (e.g., standardizing phone formats, fixing Arabic numeric encodings, repairing emails).
-
-If corrected, the record moves to `validated_orders` with an exhaustive `corrections` array detailing exactly what changed (Audit Trail):
-
-```json
-{
-  "_id": "طلب-100003",
-  "run_id": "b0d5576b-e478-4544-a93b-a421ae734a1f",
-  "source_file": "sample_orders200.csv",
-  "source_row_number": 4,
-  "ingested_at": "ISODate('2026-10-05T13:15:36.534Z')",
-  "engine_used": "python_batch",
-  "raw_record": {
-    "order_id": "طلب-100003",
-    "total_amount": "٧٠٦٠٠٠٫٠"
-  },
-  "processed_at": "ISODate('2026-10-05T13:16:15.424Z')",
-  "order_id": "طلب-100003",
-  "total_amount": 706000.0,
-  "items": [
-    {
-      "sku": "SKU-1010",
-      "quantity": 2,
-      "unit_price": 257000.0
-    }
-  ],
-  "quality_status": "corrected",
-  "corrections": [
-    {
-      "field": "total_amount",
-      "original_value": "٧٠٦٠٠٠٫٠",
-      "corrected_value": "706000.0",
-      "rule_code": "NUMERIC_FORMAT_NORMALIZED"
-    }
-  ]
-}
-```
-
-### Quarantined Records (`orders_quarantine`)
-
-If a record is fundamentally corrupted (e.g., missing essential IDs, impossible dates, corrupt JSON), it is permanently isolated in the quarantine collection. It logs the exact `validation_errors`:
-
-```json
-{
-  "_id": "sample_orders.csv_1_طلب-100000",
-  "run_id": "db1ebcf9-8a02-470e-872a-d9c6632806d5",
-  "validation_errors": [
-    "Quarantined: INVALID_ITEM_QUANTITY_OR_PRICE"
-  ],
-  "raw_record": {
-    "order_id": "طلب-100000",
-    "items_json": "[{\"sku\":\"SKU-1010\",\"qty\":-2}]"
-  },
-  "quality_status": "quarantined"
-}
-```
-
-### 🛡️ Idempotency & Upsert Logic
-
-The pipeline is strictly **Idempotent**. It builds a `Unique Index` on the `order_id` field. During the writing phase back to MongoDB, it utilizes the `Upsert` mechanism (via Spark Connector). If a pipeline is rerun, it does not duplicate records; it gracefully updates existing ones, preventing data swamp scenarios.
-
-### 📈 ELT Master Summary Metrics
-
-```json
-{
-    "run_id": "db1ebcf9-8a02-470e-872a-d9c6632806d5",
-    "file_name": "sample_orders.csv",
-    "file_size_mb": 88.0,
-    "engine_used": "pyspark_elt",
-    "rows_read": 50000,
-    "raw_loaded": 50000,
-    "valid_count": 33899,
-    "corrected_count": 11205,
-    "quarantine_count": 4896,
-    "elapsed_seconds": 272.52,
-    "throughput": 183.47,
-    "partitions": "10",
-    "error_case_counts": {
-        "Quarantined: INVALID_ITEM_QUANTITY_OR_PRICE": 715,
-        "Quarantined: MISSING_CUSTOMER_ID": 402,
-        "Quarantined: INVALID_IMPOSSIBLE_DATE": 332
-    }
-}
-```
-
----
-
-## 🧠 8. Stage 4: Advanced Analytics & Optimization
-
-1. **Queries & Indexes:**  
-   The project implements 5 core business queries. It creates 3 indexes including a **Compound Index** (`idx_city_status`). It executes `explain("executionStats")` before and after indexing to scientifically prove performance gains (reduced execution time and docs examined).
-2. **Aggregations:**  
-   5 advanced aggregation pipelines provide insights such as *Top Cities by Sales*, *VIP Customers*, and *Delivery Type Performance*.
-3. **Materialized Views:**  
-   We implemented two Materialized Views (`mv_daily_sales_summary`, `mv_payment_method_summary`). They feature an **Incremental Refresh Strategy** utilizing MongoDB's `$merge` operator. It only processes newly added records (delta processing) based on `processed_at`, making it highly efficient.
-4. **Scheduled Jobs:**  
-   `APScheduler` handles background tasks to auto-refresh the views every few hours. Execution logs (success/fail, duration) are saved in the `job_logs` collection.
-
----
-
-## 🌐 9. Stage 5: Running the Unified FastAPI Server & Web Dashboard
-
-### Launching the System
-
-Open your terminal and run the main controller script. It provides an Interactive CLI to run files manually, or launch the API Server:
-
-```bash
-python src/main.py
-```
-
-### Accessing the Web Dashboard
-
-Once the server is running, open your browser at:
-
-- **Swagger UI (Official Automated Evaluation Interface):** `http://127.0.0.1:8000/docs`
-- **Auto-Redirect Root:** `http://127.0.0.1:8000/`
-
-### Unified API Endpoints Reference
-
-| Method & Endpoint | Description & Functionality |
-|---|---|
-| `GET /health` | Verifies system health and returns API status. |
-| `POST /ingest` | Triggers the Hybrid Ingestion & ELT pipeline. Features a dynamic Enum Dropdown mapping to files in the `/data` directory. |
-| `POST /indexes` | Creates the 3 custom MongoDB indexes (including Compound Indexes). |
-| `GET /queries` | Lists all 5 operational queries available for Explain analysis. |
-| `GET /queries/{name}` | Executes `explain("executionStats")` before/after indexing via an interactive Dropdown selection. |
-| `GET /aggregations` | Lists all 5 analytical aggregation reports. |
-| `GET /aggregations/{name}` | Runs any specific aggregation report dynamically via an Enum Dropdown. |
-| `POST /refresh-mv` | Performs a `$merge` Incremental Refresh of Materialized Views using watermark deltas. |
-| `GET /jobs` | Lists the most recent APScheduler execution audit logs from `job_logs`. |
-| `POST /jobs/{name}/run` | Immediately triggers a scheduled job manually (e.g., `refresh_daily_sales`) via Dropdown selection. |
-
----
-
-## 🧰 10. How to Run the Project
-
-### 1. Install Dependencies
+From the repository root:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Launch the Master Interface
+The required packages include:
 
-Run the following command in your terminal:
+```text
+fastapi
+uvicorn
+pymongo
+pyspark
+schedule
+python-dotenv
+pytest
+httpx
+```
+
+### 6.3 Configure environment variables
+
+Copy the example file:
+
+```
+
+---
+
+## 7. Running the Midterm Pipeline
+
+### 7.1 Generate a small sample
+
+```bash
+python src/create_small_sample.py
+```
+
+### 7.2 Run the main pipeline
 
 ```bash
 python src/main.py
 ```
 
-### 3. Select Execution Mode
+The program accepts an input-file path, for example:
 
-The CLI will greet you with a dynamic menu. You can either select a specific dataset to process locally via the terminal, OR select `[1]` to launch the Web Interface.
+```text
+D:\midterm-data-pipeline\data\01_student_test_small.csv
+```
 
-### 4. Access the Swagger UI
+or:
 
-Open your browser and navigate to:
+```text
+/home/user/midterm-data-pipeline/data/01_student_test_small.csv
+```
 
-👉 **`http://127.0.0.1:8000/docs`**
+### 7.3 Run with an environment variable
 
-*Enjoy exploring the pipeline!*
+Linux/macOS:
+
+```bash
+export PIPELINE_INPUT_FILE="data/01_student_test_small.csv"
+python src/main.py
+```
+
+Windows PowerShell:
+
+```powershell
+$env:PIPELINE_INPUT_FILE="data\01_student_test_small.csv"
+python src/main.py
+```
+
+### 7.4 Engine selection
+
+The router selects the engine according to file size:
+
+- Files below `SMALL_FILE_THRESHOLD_MB` are processed with Python Batch.
+- Larger files are processed with PySpark.
+
+The system does not depend on a fixed filename or a hard-coded number of records.
+
+---
+
+## 8. Data Processing and Quality Rules
+
+### 8.1 Raw ingestion
+
+Records are first written to `orders_raw` before cleaning. This preserves the original input and allows traceability and reprocessing.
+
+### 8.2 Quality checks
+
+The quality layer can check rules such as:
+
+- Missing `order_id`.
+- Missing `customer_id`.
+- Invalid email address.
+- Invalid phone number.
+- Invalid currency.
+- Unknown order status.
+- Impossible order date.
+- Missing product SKU or name.
+- Invalid item quantity or price.
+- Corrupted items JSON.
+- Empty item lists.
+
+### 8.3 Correction versus quarantine
+
+- A **corrected record** contains an error that can be safely fixed without changing the meaning of the record.
+- A **quarantined record** contains a critical error or conflicting errors that prevent safe correction.
+
+### 8.4 Conflicting errors
+
+If one record contains more than one critical error, it is classified as:
+
+```text
+MULTIPLE_CONFLICTING_ERRORS
+```
+
+This prevents the same record from being counted in multiple error categories and makes the quarantine statistics mutually consistent.
+
+---
+
+## 9. Sample Execution Results
+
+The pipeline was tested with:
+
+```text
+01_student_test_small.csv
+```
+
+The recorded results were:
+
+  {
+        "run_id": "run_20261005_205846",
+        "file_name": "01_student_test_small.csv",
+        "file_size_mb": 0.0,
+        "engine_used": "pyspark_elt",
+        "rows_read": 20000,
+        "raw_loaded": 20000,
+        "valid_count": 12000,
+        "corrected_count": 5000,
+        "quarantine_count": 3000,
+        "elapsed_seconds": 37.5,
+        "throughput": 533.4,
+        "partitions": "10",
+        "error_case_counts": {
+            "Quarantined: EMPTY_ITEMS": 250,
+            "Quarantined: INVALID_ITEM_QUANTITY_OR_PRICE": 250,
+            "Quarantined: INVALID_CURRENCY": 250,
+            "Quarantined: MISSING_CUSTOMER_ID": 250,
+            "Quarantined: INVALID_IMPOSSIBLE_DATE": 250,
+            "Quarantined: MISSING_ORDER_ID": 250,
+            "Quarantined: INVALID_UNKNOWN_STATUS": 250,
+            "Quarantined: MISSING_ITEM_SKU_OR_NAME": 250,
+            "Quarantined: INVALID_EMAIL_ADDRESS": 250,
+            "Quarantined: MULTIPLE_CONFLICTING_ERRORS": 250,
+            "Quarantined: CORRUPTED_ITEMS_JSON": 250,
+            "Quarantined: INVALID_PHONE_NUMBER": 250
+        },
+        "inserted_count": 17000,
+        "updated_count": 0,
+        "unchanged_count": 0
+  }
+
+
+> Execution time and analytical results may change when a different input file is used because all results are calculated from the current database contents.
+
+---
+
+## 10. Final-Phase Requirements
+
+The final phase adds 7 marks to the midterm project and covers:
+
+1. Queries, indexes, and explain statistics.
+2. Aggregation reports.
+3. Materialized views.
+4. Scheduled jobs.
+5. FastAPI API.
+6. GitHub documentation, environment template, and reproducibility.
+
+The midterm functionality remains in the same repository. The final phase extends it without replacing the original pipeline.
+
+---
+
+## 11. Queries and Indexes
+
+### 11.1 Required indexes
+
+`src/db_indexes.py` creates at least three indexes:
+
+1. **Unique index** on `orders_validated`:
+
+```python
+("order_id", ASCENDING)
+```
+
+This prevents duplicate order IDs and supports direct order lookup.
+
+2. **Single index** on `orders_quarantine`:
+
+```python
+("record_status", ASCENDING)
+```
+
+This supports fast filtering of quarantined records by status.
+
+3. **Compound index** on `orders_validated`:
+
+```python
+[("order_date", DESCENDING), ("status", ASCENDING)]
+```
+
+This is the required compound index and supports queries combining date and order status.
+
+> `record_status` is used because it matches the actual quarantine-record structure. Index field names must always match the fields stored in MongoDB.
+
+### 11.2 Index rationale
+
+- `order_id`: efficient direct lookup and duplicate prevention.
+- `record_status`: efficient filtering of quarantined records.
+- `order_date + status`: efficient filtering by date and status together.
+
+### 11.3 Create indexes
+
+Through the API:
+
+```http
+POST /indexes
+```
+
+Or directly:
+
+```bash
+python src/indexes.py
+```
+
+### 11.4 Five practical queries
+
+| Query name | Description |
+|---|---|
+| `q1_search_by_id` | Search by `order_id` |
+| `q2_date_and_status` | Search by date and status using the compound index |
+| `q3_quarantine_errors` | Search quarantined records by `record_status` |
+| `q4_wallet_payments` | Return sample records paid through a wallet |
+| `q5_city_search` | Search orders by city |
+
+### 11.5 Explain execution statistics
+
+For the first three queries, MongoDB performance information is collected with:
+
+```text
+explain("executionStats")
+```
+
+The response can include:
+
+- `executionTimeMillis`.
+- `totalDocsExamined`.
+- `totalKeysExamined`.
+- `nReturned`.
+- The selected execution plan.
+
+To demonstrate the effect of indexes, the queries are executed before and after index creation, and the execution time and examined documents are compared.
+
+Example requests:
+
+```http
+GET /queries/q1_search_by_id
+GET /queries/q2_date_and_status
+GET /queries/q3_quarantine_errors
+GET /queries/q4_wallet_payments
+GET /queries/q5_city_search
+```
+
+---
+
+## 12. Aggregation Reports
+
+`src/db_aggregations_final.py` provides at least five reports based on real MongoDB data:
+
+| Report | Description |
+|---|---|
+| `top_cities` | Number of orders grouped by city |
+| `order_status` | Distribution of orders by status |
+| `payment_methods` | Usage of payment methods |
+| `busy_days` | Number of orders grouped by day |
+| `top_customers` | Customers ranked by order count |
+
+### Run the reports
+
+List available reports:
+
+```http
+GET /aggregations
+```
+Run a specific report:
+
+```http
+GET /aggregations/top_cities
+GET /aggregations/order_status
+GET /aggregations/payment_methods
+GET /aggregations/busy_days
+GET /aggregations/top_customers
+```
+
+Each report has a clear name, an independent aggregation pipeline, and a JSON response generated from current database data rather than hard-coded results.
+
+---
+
+## 13. Materialized Views
+
+The project contains at least two materialized views:
+
+1. `daily_sales_mv`
+   - Summarizes orders and sales by day.
+
+2. `city_sales_mv`
+   - Summarizes orders and sales by city.
+
+### 13.1 Incremental refresh
+
+The views are refreshed through aggregation pipelines using `$merge`. New or updated results are merged into the materialized collections instead of manually deleting and rebuilding all results.
+
+This allows the analytical views to be refreshed when new data arrives while keeping them available as fast-to-query collections.
+
+### 13.2 Refresh the views
+
+```http
+POST /refresh-mv
+```
+
+The endpoint returns the operation status and samples from:
+
+- `daily_sales_mv`.
+- `city_sales_mv`.
+
+---
+
+## 14. Scheduled Jobs
+
+The project provides two real scheduled tasks:
+
+### 14.1 `update_views`
+
+Refreshes the materialized views, including:
+
+- `daily_sales_mv`.
+- `city_sales_mv`.
+
+### 14.2 `generate_report`
+
+Generates a periodic JSON report and stores it in the `reports` directory.
+
+### 14.3 Job logging
+
+Each job records the following in `jobs_log`:
+
+- Job name.
+- Start time.
+- End time.
+- Status: `success` or `failed`.
+- Error message when applicable.
+- Result details when successful.
+
+### 14.4 Manual execution
+
+List recent job logs:
+
+```http
+GET /jobs
+```
+
+Run the view-refresh job manually:
+
+```http
+POST /jobs/update_views/run
+```
+
+Run the report-generation job manually:
+
+```http
+POST /jobs/generate_report/run
+```
+
+The scheduling logic is implemented in `db_scheduled_jobs.py` and can run the jobs according to the configured schedule.
+
+---
+
+## 15. FastAPI Interface
+
+### 15.1 Start the API
+
+```bash
+python - run / api.py
+```
+
+
+### 15.2 Swagger UI
+
+Open the following URL after starting the server:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Swagger contains the following sections:
+
+- Basic operations.
+- Queries.
+- Aggregations.
+- Materialized views.
+- Scheduled jobs.
+
+### 15.3 API endpoints
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| `GET` | `/health` | Check service and database health |
+| `POST` | `/ingest` | Run the existing ingestion pipeline |
+| `POST` | `/indexes` | Create the required indexes |
+| `GET` | `/queries` | List available queries |
+| `GET` | `/queries/{name}` | Execute a selected query |
+| `GET` | `/aggregations` | List available reports |
+| `GET` | `/aggregations/{name}` | Execute a selected aggregation |
+| `POST` | `/refresh-mv` | Refresh materialized views |
+| `GET` | `/jobs` | Return job-execution logs |
+| `POST` | `/jobs/{name}/run` | Run a selected job manually |
+
+All responses are JSON. The API delegates the actual work to the project modules instead of duplicating the implementation in `api.py`.
+
+---
+
+## 16. Recommended Testing Sequence
+
+### Step 1 — Start MongoDB
+
+Make sure MongoDB is available at:
+
+```text
+mongodb://localhost:27017/
+```
+
+### Step 2 — Install and configure
+
+```bash
+pip install -r requirements.txt
+cp .env.example .env
+```
+
+### Step 3 — Load data
+
+```bash
+python src/main.py
+```
+
+### Step 4 — Start the API
+
+```bash
+python -m uvicorn src.api:app --reload
+```
+
+### Step 5 — Health check
+
+```http
+GET /health
+```
+
+### Step 6 — Create indexes
+
+```http
+POST /indexes
+```
+
+### Step 7 — Test queries
+
+```http
+GET /queries
+GET /queries/q1_search_by_id
+GET /queries/q2_date_and_status
+GET /queries/q3_quarantine_errors
+GET /queries/q4_wallet_payments
+GET /queries/q5_city_search
+```
+
+### Step 8 — Test aggregations
+
+```http
+GET /aggregations
+GET /aggregations/top_cities
+GET /aggregations/order_status
+GET /aggregations/payment_methods
+GET /aggregations/busy_days
+GET /aggregations/top_customers
+```
+
+### Step 9 — Refresh materialized views
+
+```http
+POST /refresh-mv
+```
+
+### Step 10 — Test scheduled jobs
+
+```http
+POST /jobs/update_views/run
+POST /jobs/generate_report/run
+GET /jobs
+```
+
+### Step 11 — Run automated tests
+
+```bash
+pytest -q
+```
+
+---
+
+## 17. Reproducibility and Dynamic Input
+
+The project does not depend on:
+
+- A single fixed filename.
+- A fixed number of rows.
+- Hard-coded analytical results.
+- One specific city or customer.
+- The training dataset only.
+- Developer-specific absolute paths.
+
+When a different valid input file is provided, the system recalculates the complete pipeline, reports, indexes, views, and execution metrics from the new data.
+
+---
+
+## 18. Reports and Outputs
+
+Execution outputs are stored in the `reports` directory. Typical outputs include:
+
+- `results.json`: processing metrics and run history.
+- Payment and analytical reports.
+- PySpark processing results.
+- Scheduled-job logs.
+
+The preferred report format is one `results.json` file containing a list of execution records rather than creating a new report file for every run.
+
+A run record may include:
+
+- `run_id`.
+- Input filename.
+- Selected engine.
+- Rows read.
+- Raw rows loaded.
+- Valid, corrected, and quarantined counts.
+- Elapsed time.
+- Throughput.
+- Inserted and updated counts.
+- Error distribution.
+
+---
+
+## 19. Grading Coverage
+
+| Requirement | Marks / relevance |
+|---|---:|
+| Existing midterm project | 18 marks |
+| Queries, indexes, and explain | 1.5 |
+| Aggregation reports | 1.5 |
+| Materialized views | 1.0 |
+| Scheduled jobs | 1.0 |
+| FastAPI API | 0.75 |
+| GitHub, README, and runnability | 0.50 |
+| Discussion and understanding | 0.25 |
+| **Final-phase additions** | **7 marks** |
+| **Total** | **25 marks** |
+
+A dashboard is optional and is not required by the listed final-phase criteria.
+
+---
+
+## 20. Discussion Questions and Answers
+
+### Why are two processing engines used?
+
+Python Batch is appropriate for small files because it is lightweight and fast for that scale. PySpark is used for larger files because it supports parallel processing and partition-based execution.
+
+### Why is raw data stored separately?
+
+Keeping the original data in `orders_raw` preserves traceability and allows later review or reprocessing.
+
+### What is the difference between corrected and quarantined records?
+
+A corrected record contains an error that can be fixed safely. A quarantined record contains a critical or conflicting error that cannot be corrected without risking data integrity.
+
+### Why was a compound index created?
+
+Some queries filter by more than one field, such as `order_date` and `status`. A compound index supports these queries and reduces unnecessary document examination.
+
+### How is index impact demonstrated?
+
+The query is executed with `explain("executionStats")` before and after index creation. The execution time, examined documents, and examined index keys are then compared.
+
+### Why use materialized views?
+
+Repeated reports such as daily sales or city sales can be expensive to recompute. Materialized views store reusable analytical results and make repeated reads faster.
+
+### What does incremental refresh mean?
+
+It means that new or changed aggregation results are merged into the materialized collection with `$merge` instead of manually rebuilding the entire view.
+
+### How is job success verified?
+
+Each job writes its start time, end time, status, and optional error details to `jobs_log`. The log is available through `GET /jobs`.
+
+### Why is `api.py` relatively short?
+
+The API is intentionally a thin execution layer. Indexing, querying, aggregation, materialized views, and scheduled jobs are implemented in separate modules. This follows modular design and avoids duplicated code.
+
+### Is this API a separate backend?
+
+No. It is a unified interface for executing and testing the existing project functionality through JSON and Swagger, exactly as required by the specification.
+
+---
+
+
+
+---
+
+## 21. Conclusion
+
+This project provides a complete pipeline from input-file ingestion to data validation, correction, quarantine, storage, analytics, and API-based execution.
+
+The midterm phase demonstrates data engineering and ELT using Python Batch and PySpark. The final phase extends the same repository with indexes, explainable queries, aggregation reports, incrementally refreshed materialized views, scheduled jobs, and a documented FastAPI interface.
+
+The design is modular, reproducible, and suitable for evaluation through Swagger UI. It avoids hard-coded results and supports different input datasets, which makes the system more reliable and extensible.
+
+---
+
+## 22. Quick Start
+
+
+## Run Only the API Tests
+
+```powershell
+python -m pytest -q api.py
+```
+
+## Display Detailed Test Results
+
+```powershell
+python -m pytest -v src/api.py
+```
+
+## What Do These Tests Verify?
+
+The tests verify that:
+
+- The FastAPI application can be imported successfully.
+- `GET /health` works correctly.
+- `GET /queries` works correctly.
+- `GET /jobs` works correctly.
+- The responses are returned as JSON.
+- The endpoints return the expected HTTP status codes.
+
+If the following result appears:
+
+```text
+3 passed
+```
+
+the basic API tests have passed successfully.
+
+## Difference Between the Main Commands
+
+| Command | Purpose |
+|---|---|
+| `python src/main.py` | Run the pipeline and process the input data |
+| `python src/api.py` | Start FastAPI and Swagger UI |
+
+## Execution Order
+
+### 1. Start MongoDB
+
+Make sure that MongoDB is running on:
+
+```text
+mongodb://localhost:27017/
+```
+
+### 2. Run the Data Pipeline
+
+```powershell
+python src/main.py
+```
+
+This command reads the input file, selects the appropriate processing engine, processes the data, and stores the results in MongoDB.
+
+### 3. Start the FastAPI Application
+
+Open a second PowerShell window and run:
+
+```powershell
+python -m uvicorn src.api:app --reload
+```
+
+### 4. Open Swagger UI
+
+Open the following URL in a browser:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Swagger UI can be used to test the API endpoints interactively.
+
+### 5. Run the API Tests
+
+Open a third PowerShell window and run:
+
+```powershell
+python -m pytest -q
+```
+
+> Do not use `python tests/test_api.py` to run the tests. Running the file directly does not automatically execute functions whose names start with `test_`. Use `pytest` instead.
+
+
+
+
+
+
+
+
+
+
+
+
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Start MongoDB, then run the data pipeline
+python src/main.py
+
+# Start the API
+python -m uvicorn src.api:app --reload
+
+# Open Swagger UI
+# http://127.0.0.1:8000/docs
+```
+### test_api
+
+![test_api](docs/screenshots/test_api.png)
+
+## Screenshots and Documentation
+
+### Project Structure
+
+![Project Structure](docs/screenshots/01_project_structure.png )
+
+### Pipeline Execution
+
+![Pipeline Execution](docs\screenshots\04_pipeline_execution.png)
+
+### Pipeline Results
+
+![Pipeline Results](docs/screenshots/05_pipeline_results.png)
+
+### FastAPI Swagger Documentation
+
+![Swagger API](docs/screenshots/06_swagger_api.png)
+
+### Indexes
+
+![Indexes](docs/screenshots/08_indexes_created.png)
+
+
+### Aggregation Reports
+
+![Aggregation Result](docs/screenshots/10_aggregation_reports.png)
+
+### Materialized Views
+
+![Materialized Views](docs/screenshots/11_materialized_views.png)
+
+### Scheduled Jobs
+
+![Scheduled Jobs](docs/screenshots/12_scheduled_jobs.png)
+
+
