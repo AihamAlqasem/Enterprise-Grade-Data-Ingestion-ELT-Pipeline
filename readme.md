@@ -1,139 +1,198 @@
 # 🚀 Big Data Pipeline and Advanced Analytics Project
-## Author: Aiham Alqasem — أيهم ال قاسم
-## Course: Big Data (Practical) — Midterm Project and Final Phase (Phase I & II)
 
- 
-Table of Contents
-1	Overview and High-level Architecture
-2	Project Objectives
-3	System Architecture and Data Layers
-4	Repository Structure
-5	Project Files and Their Roles
-6	Environment Setup
-7	Running the Midterm Phase
-8	Data Processing and Quality Rules
-9	Experimental Execution Results
-10	Final Phase Requirements
-11	Queries and Indexes
-12	Aggregation Reports
-13	Materialized Views
-14	Scheduled Jobs
-15	FastAPI Interface
-16	Suggested Test Sequence
-17	Reproducibility and Dynamic Input
-18	Reports and Outputs
-19	Coverage of Evaluation Requirements
-20	Discussion Questions and Answers
-21	Conclusion
-22	Quick Run and Tests
+**Author:** Aiham Alqasem — أيهم ال قاسم
 
+**Course:** Big Data (Practical) — Midterm Project and Final Phase (Phase I & II)
 
+## 📑 Table of Contents
 
-1. Overview and High-level Architecture
+ 1. [Overview and High-level Architecture](#1-overview-and-high-level-architecture)
+
+ 2. [Project Objectives](#2-project-objectives)
+
+ 3. [System Architecture and Data Layers](#3-system-architecture-and-data-layers)
+
+ 4. [Repository Structure](#4-repository-structure)
+
+ 5. [Project Files and Their Roles](#5-project-files-and-their-roles)
+
+ 6. [Environment Setup](#6-environment-setup)
+
+ 7. [Running the Midterm Phase](#7-running-the-midterm-phase)
+
+ 8. [Data Processing and Quality Rules](#8-data-processing-and-quality-rules)
+
+ 9. [Experimental Execution Results](#9-experimental-execution-results)
+
+10. [Final Phase Requirements](#10-final-phase-requirements)
+
+11. [Queries and Indexes](#11-queries-and-indexes)
+
+12. [Aggregation Reports](#12-aggregation-reports)
+
+13. [Materialized Views](#13-materialized-views)
+
+14. [Scheduled Jobs](#14-scheduled-jobs)
+
+15. [FastAPI Interface](#15-fastapi-interface)
+
+16. [Suggested Test Sequence](#16-suggested-test-sequence)
+
+17. [Reproducibility and Dynamic Input](#17-reproducibility-and-dynamic-input)
+
+18. [Reports and Outputs](#18-reports-and-outputs)
+
+19. [Coverage of Evaluation Requirements](#19-coverage-of-evaluation-requirements)
+
+20. [Discussion Questions and Answers](#20-discussion-questions-and-answers)
+
+21. [Conclusion](#21-conclusion)
+
+22. [Quick Run and Tests](#22-quick-run-and-tests)
+
+## 1. Overview and High-level Architecture
+
 This project is a comprehensive, reusable data pipeline for big data processing and analytics. It is designed to handle large volumes of e-commerce data via dynamic input, strict validation, safe error correction, organized quarantine of invalid records, and producing analytics and reports consumable via an API.
 
-The system relies on:
+**The system relies on:**
 
-•	Apache Spark / PySpark for distributed processing and large file handling.
-•	Python Batch for efficient small-file processing with low latency.
-•	MongoDB for flexible document storage, querying, indexing, and aggregation.
-•	FastAPI to provide a unified run-and-test interface via Swagger UI and JSON.
+* **Apache Spark / PySpark** for distributed processing and large file handling.
 
-Project features also include:
+* **Python Batch** for efficient small-file processing with low latency.
 
-•	Intelligent routing of files to the most appropriate processing engine.
-•	Clear ELT separation between ingestion and transformation.
-•	Safe rerun capability using idempotency and upsert operations.
-•	Materialized views with incremental updates.
-•	Execution metrics logging and run reports.
-•	Separation of raw records from validated and quarantined records.
+* **MongoDB** for flexible document storage, querying, indexing, and aggregation.
 
-The API is not a separate backend that reimplements the project; it is a thin execution layer that invokes existing module functions, satisfying the project requirement while preserving modular design.
+* **FastAPI** to provide a unified run-and-test interface via Swagger UI and JSON.
 
-Midterm Phase — Data Engineering and ELT
+**Project features also include:**
+
+* Intelligent routing of files to the most appropriate processing engine.
+
+* Clear ELT separation between ingestion and transformation.
+
+* Safe rerun capability using idempotency and upsert operations.
+
+* Materialized views with incremental updates.
+
+* Execution metrics logging and run reports.
+
+* Separation of raw records from validated and quarantined records.
+
+*Note: The API is not a separate backend that reimplements the project; it is a thin execution layer that invokes existing module functions, satisfying the project requirement while preserving modular design.*
+
+### Midterm Phase — Data Engineering and ELT
+
 The first phase covers:
 
-23	Reading CSV files.
-24	Auto-selecting the appropriate processing engine.
-25	Using Python Batch for small files.
-26	Using PySpark for large files.
-27	Loading raw data into MongoDB.
-28	Cleaning, validating, and normalizing records.
-29	Safely correcting fixable errors.
-30	Quarantining records with critical errors.
-31	Storing execution metrics and processing reports.
+* Reading CSV files.
 
-Final Phase — Analytics and API
+* Auto-selecting the appropriate processing engine.
+
+* Using Python Batch for small files.
+
+* Using PySpark for large files.
+
+* Loading raw data into MongoDB.
+
+* Cleaning, validating, and normalizing records.
+
+* Safely correcting fixable errors.
+
+* Quarantining records with critical errors.
+
+* Storing execution metrics and processing reports.
+
+### Final Phase — Analytics and API
+
 The second phase adds:
 
-32	Creating operational indexes and queries.
-33	Measuring the effect of indexes using explain("executionStats").
-34	Building aggregation reports based on actual DB data.
-35	Creating materialized views with incremental update.
-36	Creating scheduled jobs with full execution logging.
-37	Providing a unified FastAPI interface for running and testing.
-38	Documenting installation, setup, run, and test procedures.
+* Creating operational indexes and queries.
 
+* Measuring the effect of indexes using `explain("executionStats")`.
 
+* Building aggregation reports based on actual DB data.
 
-2. Project Objectives
+* Creating materialized views with incremental update.
+
+* Creating scheduled jobs with full execution logging.
+
+* Providing a unified FastAPI interface for running and testing.
+
+* Documenting installation, setup, run, and test procedures.
+
+## 2. Project Objectives
+
 The project aims to build a practical, scalable data processing system achieving the following objectives:
 
-•	Create a reusable data processing pipeline.
-•	Accept different input files without relying on a fixed filename or fixed record count.
-•	Separate data into layers: raw, validated, and quarantined.
-•	Apply clear, traceable data quality rules.
-•	Use MongoDB for storage, querying, indexing, and aggregation.
-•	Demonstrate the practical effect of indexes rather than just creating them.
-•	Produce meaningful analytical reports.
-•	Persist analytical results in reusable materialized views.
-•	Support manual and scheduled execution.
-•	Facilitate evaluation via Swagger UI and JSON responses.
+* Create a reusable data processing pipeline.
 
+* Accept different input files without relying on a fixed filename or fixed record count.
 
+* Separate data into layers: raw, validated, and quarantined.
 
-3. System Architecture and Data Layers
+* Apply clear, traceable data quality rules.
+
+* Use MongoDB for storage, querying, indexing, and aggregation.
+
+* Demonstrate the practical effect of indexes rather than just creating them.
+
+* Produce meaningful analytical reports.
+
+* Persist analytical results in reusable materialized views.
+
+* Support manual and scheduled execution.
+
+* Facilitate evaluation via Swagger UI and JSON responses.
+
+## 3. System Architecture and Data Layers
+
 Data flow passes through the following stages:
 
-[CSV File]
-     │
-     ▼
-[File Router]
-     │
-     ├── Small file ──> [Python Batch]
-     │
-     └── Large file ──> [PySpark ELT]
-                           │
-                           ▼
-                  [orders_raw — raw data]
-                           │
-                           ▼
-                    [data quality rules]
-                      /        │        \
-                     /         │         \
-                    ▼          ▼          ▼
+```
+       [CSV File]
+           │
+           ▼
+     [File Router]
+           │
+           ├── Small file ──> [Python Batch]
+           │
+           └── Large file ──> [PySpark ELT]
+                                   │
+                                   ▼
+                         [orders_raw — raw data]
+                                   │
+                                   ▼
+                         [data quality rules]
+                           /       │        \
+                          /        │         \
+                         ▼         ▼          ▼
        [orders_validated] [corrections] [orders_quarantine]
-                    │
-                    ▼
+                           │
+                           ▼
        [queries + aggregations + materialized views]
-                    │
-                    ▼
-                [FastAPI]
-                    │
-                    ▼
-             [Swagger / JSON]
+                           │
+                           ▼
+                       [FastAPI]
+                           │
+                           ▼
+                    [Swagger / JSON]
 
-3.1 MongoDB Collections
-Collection	Purpose
-orders_raw	Store records immediately after ingestion without modification, with metadata for traceability.
-orders_validated	Store clean records and records that were successfully corrected.
-orders_quarantine	Store records that contain critical or non-safely-fixable errors.
-jobs_log	Store history of scheduled job runs, statuses, and errors.
-daily_sales_mv	Materialized view summarizing orders and sales by day.
-city_sales_mv	Materialized view summarizing orders and sales by city.
+```
 
+### 3.1 MongoDB Collections
 
-4. Repository Structure
+| Collection | Purpose | 
+| ----- | ----- | 
+| `orders_raw` | Store records immediately after ingestion without modification, with metadata for traceability. | 
+| `orders_validated` | Store clean records and records that were successfully corrected. | 
+| `orders_quarantine` | Store records that contain critical or non-safely-fixable errors. | 
+| `jobs_log` | Store history of scheduled job runs, statuses, and errors. | 
+| `daily_sales_mv` | Materialized view summarizing orders and sales by day. | 
+| `city_sales_mv` | Materialized view summarizing orders and sales by city. | 
+
+## 4. Repository Structure
+
+```
 midterm-data-pipeline/
 │
 ├── config/
@@ -163,44 +222,58 @@ midterm-data-pipeline/
 ├── requirements.txt                # Required dependencies
 └── README.md                       # Project documentation
 
+```
 
+## 5. Project Files and Their Roles
 
-5. Project Files and Their Roles
 This section explains the role of each file in the execution path so the data flow can be traced from ingestion to API results.
 
-5.1 config/settings.py — Central Settings
+### 5.1 `config/settings.py` — Central Settings
+
 This file contains application and database settings, such as the MongoDB URI, database name, and small-file size thresholds. Collecting settings in one file makes environment changes easy and avoids duplicating values across files. It also uses environment variables where appropriate instead of hardcoding values.
 
-5.2 src/main.py — Pipeline Entry Point and Orchestrator
-This file is the primary entry point for the project. It accepts the data file path or reads it from the PIPELINE_INPUT_FILE variable, then passes it to the file router. It then monitors the execution result and compiles execution metrics and the final report.
+### 5.2 `src/main.py` — Pipeline Entry Point and Orchestrator
 
-In practice: main.py receives the file and routes it to the File Router, and does not implement all processing details itself. This separation keeps the orchestrator simple and allows changing the processing engine without altering how the project is executed.
+This file is the primary entry point for the project. It accepts the data file path or reads it from the `PIPELINE_INPUT_FILE` variable, then passes it to the file router. It then monitors the execution result and compiles execution metrics and the final report.
 
-Run command:
+In practice: `main.py` receives the file and routes it to the File Router, and does not implement all processing details itself. This separation keeps the orchestrator simple and allows changing the processing engine without altering how the project is executed.
 
+**Run command:**
+
+```
 python src/main.py
 
-5.3 File Router
-The router picks the processing engine based on the file size and the SMALL_FILE_THRESHOLD_MB value:
+```
 
-•	If the file size is smaller than the threshold, route it to load_batch.py.
-•	If the file size exceeds the threshold, route it to spark_load.py and then to the PySpark ELT stages.
+### 5.3 File Router
+
+The router picks the processing engine based on the file size and the `SMALL_FILE_THRESHOLD_MB` value:
+
+* If the file size is smaller than the threshold, route it to `load_batch.py`.
+
+* If the file size exceeds the threshold, route it to `spark_load.py` and then to the PySpark ELT stages.
 
 Thus the system does not rely on a fixed filename or a fixed record count; it selects the engine based on the actual input.
 
-5.4 src/load_batch.py — Python Batch Engine
+### 5.4 `src/load_batch.py` — Python Batch Engine
+
 This file is dedicated to small files. It reads data in batches and stores the record as-is (without cleaning or altering its original content), then enriches it with important metadata such as:
 
-•	run id run_id.
-•	source filename.
-•	source row number.
-•	ingestion timestamp.
-•	engine used.
+* run id (`run_id`)
+
+* source filename
+
+* source row number
+
+* ingestion timestamp
+
+* engine used
 
 Loading uses batch insert (storing a group of rows in one operation instead of inserting each row individually). This improves performance and reduces the number of DB connections.
 
-Example record stored in orders_raw:
+**Example record stored in `orders_raw`:**
 
+```
 {
   "_id": "ObjectId('6ac3e55655bdc0f333119643')",
   "run_id": "run_20261005_205846",
@@ -229,13 +302,15 @@ Example record stored in orders_raw:
   }
 }
 
-(Note: sample dataset values remain as provided.)
+```
 
-5.5 src/spark_load.py — PySpark Engine for Large Files
-This file performs the same raw ingestion function but uses Spark to leverage distributed processing and partitioning. It saves the data as-is, adds the same metadata, then writes to the orders_raw collection before starting cleaning and validation.
+### 5.5 `src/spark_load.py` — PySpark Engine for Large Files
 
-The Spark-generated record has a very similar structure and records the engine used:
+This file performs the same raw ingestion function but uses Spark to leverage distributed processing and partitioning. It saves the data as-is, adds the same metadata, then writes to the `orders_raw` collection before starting cleaning and validation.
 
+**The Spark-generated record has a very similar structure and records the engine used:**
+
+```
 {
   "_id": "ObjectId('6ac3e55655bdc0f333119643')",
   "run_id": "run_20261005_205846",
@@ -247,43 +322,33 @@ The Spark-generated record has a very similar structure and records the engine u
     "ufefforder_id": "طلب-8000001",
     "order_date": "2026-05-21T16:52:00",
     "status": "ملغي",
-    "customer_id": "عميل-8000001",
-    "customer_name": "خالد سالم",
-    "customer_phone": "717736067",
-    "customer_email": "customer8000001_221560@example.com",
-    "city": "تعز",
-    "district": "التحرير",
-    "delivery_type": "عادي",
-    "delivery_cost": "2000.0",
-    "payment_method": "نقدًا عند التسليم",
-    "payment_status": "بانتظار الدفع",
-    "payment_amount": "55000.0",
-    "currency": "YER",
-    "total_amount": "55000.0",
-    "items_json": "[{\"sku\":\"SKU-1008\",\"name\":\"محول HDMI\",\"qty\":1,\"unit_price\":14000.0,\"total\":14000.0},{\"sku\":\"SKU-1008\",\"name\":\"محول HDMI\",\"qty\":3,\"unit_price\":13000.0,\"total\":39000.0}]"
+    ...
   }
 }
 
-5.6 src/spark_etl_pipeline.py — ELT Transformations and Validation
-This file reads records from orders_raw, applies quality rules and classification. If a record is valid or can be safely corrected, it is sent to orders_validated. If it contains a critical error or cannot be safely fixed without changing the meaning, it is moved to orders_quarantine with added error details.
+```
+
+### 5.6 `src/spark_etl_pipeline.py` — ELT Transformations and Validation
+
+This file reads records from `orders_raw`, applies quality rules and classification. If a record is valid or can be safely corrected, it is sent to `orders_validated`. If it contains a critical error or cannot be safely fixed without changing the meaning, it is moved to `orders_quarantine` with added error details.
 
 The file also records correction metadata when processing a record and relies on a unique index to prevent duplicate orders. It uses upsert and idempotency — re-running the process does not create duplicate copies of the same record; it inserts when needed or updates when present.
 
-At the end of execution, it produces a report showing counts of records in each category and the number of inserted, updated, or unchanged operations.
+### 5.7 `src/quality_rules.py` — Quality Rules and Corrections
 
-5.7 src/quality_rules.py — Quality Rules and Corrections
-Contains field validation rules and classification of errors into fixable and critical errors. Examples include validation for order and customer IDs, email and phone format, currency, status, date, product data, quantity, price, and items list.
+Contains field validation rules and classification of errors into fixable and critical errors. Examples include validation for order and customer IDs, email and phone format, currency, status, date, product data, quantity, price, and items list. Separating these rules makes them testable and modifiable without touching the ingestion engine or API.
 
-Separating these rules makes them testable and modifiable without touching the ingestion engine or API.
+### 5.8 `src/db_loader.py` — MongoDB Loading Layer
 
-5.8 src/db_loader.py — MongoDB Loading Layer
 Provides functions for DB connection and executing batch inserts and upserts while preserving run metadata. This layer prevents duplication of MongoDB logic across processing modules.
 
-5.9 Metrics Module metrics
-The metrics module logs ingestion, storage, and performance metrics such as rows read, raw rows, elapsed time, throughput, batch size, and engine used. These results can be saved to reports/results.json.
+### 5.9 Metrics Module (`metrics`)
 
-Example metrics report:
+The metrics module logs ingestion, storage, and performance metrics such as rows read, raw rows, elapsed time, throughput, batch size, and engine used. These results can be saved to `reports/results.json`.
 
+**Example metrics report:**
+
+```
 {
   "run_id": "run_20261005_205846",
   "file_name": "01_student_test_small.csv",
@@ -295,142 +360,173 @@ Example metrics report:
   "batch_size": 5000
 }
 
-5.10 src/indexes.py — Create Indexes
-Creates required indexes on appropriate collections and ensures safe repeated execution. Includes a unique index on order_id, an index on record_status in quarantine records, and a compound index on date and status.
+```
 
-5.11 src/queries.py — Queries and Performance Measurement
-Contains five practical queries and collects explain("executionStats") statistics for the first three queries to compare the number of documents and index keys examined and execution time before and after index creation.
+### 5.10 `src/indexes.py` — Create Indexes
 
-5.12 src/aggregations_final.py — Analytical Reports
+Creates required indexes on appropriate collections and ensures safe repeated execution. Includes a unique index on `order_id`, an index on `record_status` in quarantine records, and a compound index on date and status.
+
+### 5.11 `src/queries.py` — Queries and Performance Measurement
+
+Contains five practical queries and collects `explain("executionStats")` statistics for the first three queries to compare the number of documents and index keys examined and execution time before and after index creation.
+
+### 5.12 `src/aggregations_final.py` — Analytical Reports
+
 Executes independent aggregation pipelines based on current MongoDB data, not on precomputed results. Provides city reports, status distributions, payment methods, busy days, and top customers.
 
-5.13 src/materialized_views.py — Materialized Views
-Creates and refreshes daily_sales_mv and city_sales_mv. Uses $merge to merge new or modified results into the materialized collection instead of deleting and rebuilding it entirely.
+### 5.13 `src/materialized_views.py` — Materialized Views
 
-5.14 src/scheduled_jobs.py — Scheduled Jobs
-Defines real jobs that can run on a schedule and logs start/end times, status, and error messages to jobs_log.
+Creates and refreshes `daily_sales_mv` and `city_sales_mv`. Uses `$merge` to merge new or modified results into the materialized collection instead of deleting and rebuilding it entirely.
 
-5.15 src/api.py — FastAPI Interface
+### 5.14 `src/scheduled_jobs.py` — Scheduled Jobs
+
+Defines real jobs that can run on a schedule and logs start/end times, status, and error messages to `jobs_log`.
+
+### 5.15 `src/api.py` — FastAPI Interface
+
 Provides a unified run-and-test layer. It does not reimplement ingestion, aggregation, or indexing logic; it calls the previous modules and returns JSON results. Therefore it remains concise, clear, and compatible with modular design.
 
-5.16 src/create_small_sample.py — Create Test Sample
+### 5.16 `src/create_small_sample.py` — Create Test Sample
+
 Generates a small data file to quickly exercise the project and validate the main path without needing a very large file.
 
-5.17 src/reset_db.py — Optional Reset
+### 5.17 `src/reset_db.py` — Optional Reset
+
 Offers an optional way to clear project data and reset the database to a clean state during testing or reruns. Use with caution as it may delete existing run data.
 
-5.18 .env.example, requirements.txt, and README.md
-•	.env.example: shows required environment variables without exposing local values.
-•	requirements.txt: lists dependencies for installation.
-•	README.md: documents setup, run, test, and reproducibility instructions.
+### 5.18 Configuration and Documentation
 
+* `.env.example`: shows required environment variables without exposing local values.
 
+* `requirements.txt`: lists dependencies for installation.
 
-6. Environment Setup
-6.1 Prerequisites
-•	Python 3.8 or newer.
-•	MongoDB running on port 27017.
-•	Apache Spark and PySpark for large-file processing.
-•	Java version compatible with Spark.
-•	Local network connectivity to MongoDB.
+* `README.md`: documents setup, run, test, and reproducibility instructions.
 
-6.2 Install Dependencies
+## 6. Environment Setup
+
+### 6.1 Prerequisites
+
+* Python 3.8 or newer.
+
+* MongoDB running on port `27017`.
+
+* Apache Spark and PySpark for large-file processing.
+
+* Java version compatible with Spark.
+
+* Local network connectivity to MongoDB.
+
+### 6.2 Install Dependencies
+
 From the project root folder:
 
+```
 pip install -r requirements.txt
 
-Core packages include:
+```
 
-fastapi
-uvicorn
-pymongo
-pyspark
-schedule
-python-dotenv
-pytest
-httpx
+*Core packages include: fastapi, uvicorn, pymongo, pyspark, schedule, python-dotenv, pytest, httpx.*
 
-6.3 Configure Environment Variables
+### 6.3 Configure Environment Variables
+
 Copy the template to a local env file:
 
+```
 cp .env.example .env
+
+```
 
 Then edit values according to your MongoDB setup, input file path, and small file size threshold as needed.
 
+## 7. Running the Midterm Phase
 
+### 7.1 Create a Small Sample
 
-7. Running the Midterm Phase
-7.1 Create a Small Sample
+```
 python src/create_small_sample.py
 
-7.2 Run the Pipeline
+```
+
+### 7.2 Run the Pipeline
+
+```
 python src/main.py
 
-The program accepts a file path, for example:
+```
 
-D:\midterm-data-pipeline\data\01_student_test_small.csv
-/home/user/midterm-data-pipeline/data/01_student_test_small.csv
+*The program accepts a file path, for example:*
 
-7.3 Run Using an Environment Variable
-On Linux/macOS:
+* `D:\midterm-data-pipeline\data\01_student_test_small.csv`
 
+* `/home/user/midterm-data-pipeline/data/01_student_test_small.csv`
+
+### 7.3 Run Using an Environment Variable
+
+**On Linux/macOS:**
+
+```
 export PIPELINE_INPUT_FILE="data/01_student_test_small.csv"
 python src/main.py
 
-On Windows PowerShell:
+```
 
+**On Windows PowerShell:**
+
+```
 $env:PIPELINE_INPUT_FILE="data\01_student_test_small.csv"
 python src/main.py
 
-7.4 Engine Selection Mechanism
+```
+
+### 7.4 Engine Selection Mechanism
+
 The router selects the engine based on file size:
 
-•	Files smaller than SMALL_FILE_THRESHOLD_MB use Python Batch.
-•	Larger files use PySpark.
+* Files smaller than `SMALL_FILE_THRESHOLD_MB` use Python Batch.
 
-The system does not rely on a fixed filename or predetermined record count.
+* Larger files use PySpark.
 
+## 8. Data Processing and Quality Rules
 
+### 8.1 Raw Ingestion
 
-8. Data Processing and Quality Rules
-8.1 Raw Ingestion
-Records are written first to orders_raw before cleaning. This ensures retention of original data, traceability, auditability, and the ability to reprocess later.
+Records are written first to `orders_raw` before cleaning. This ensures retention of original data, traceability, auditability, and the ability to reprocess later.
 
-8.2 Quality Checks
+### 8.2 Quality Checks
+
 The quality layer can validate rules such as:
 
-•	Missing order_id.
-•	Missing customer_id.
-•	Invalid email address.
-•	Invalid phone number.
-•	Unsupported currency.
-•	Unknown order status.
-•	Impossible or invalid order date.
-•	Missing product SKU or name.
-•	Invalid quantity or price.
-•	Corrupted items JSON.
-•	Empty items list.
+* Missing order_id or customer_id.
 
-8.3 Correction vs. Quarantine
-•	Corrected record: a record containing an error that can be safely fixed without changing the meaning of the data.
-•	Quarantined record: a record containing a critical or conflicting error that cannot be safely corrected without risking data integrity.
+* Invalid email address or phone number.
 
-8.4 Conflicting Errors
-If a record contains more than one critical error, it is classified under:
+* Unsupported currency or unknown order status.
 
-MULTIPLE_CONFLICTING_ERRORS
+* Impossible or invalid order date.
 
-This prevents counting the same record in multiple error categories and keeps quarantine statistics consistent and non-overlapping.
+* Missing product SKU or name.
 
+* Invalid quantity or price.
 
+* Corrupted items JSON or empty items list.
 
-9. Experimental Execution Results
-The project was tested with the file:
+### 8.3 Correction vs. Quarantine
 
-01_student_test_small.csv
+* **Corrected record:** a record containing an error that can be safely fixed without changing the meaning of the data.
 
-Recorded results were as follows:
+* **Quarantined record:** a record containing a critical or conflicting error that cannot be safely corrected without risking data integrity.
 
+### 8.4 Conflicting Errors
+
+If a record contains more than one critical error, it is classified under `MULTIPLE_CONFLICTING_ERRORS`. This prevents counting the same record in multiple error categories and keeps quarantine statistics consistent.
+
+## 9. Experimental Execution Results
+
+The project was tested with the file: `01_student_test_small.csv`
+
+**Recorded results were as follows:**
+
+```
 {
   "run_id": "run_20261005_205846",
   "file_name": "01_student_test_small.csv",
@@ -463,417 +559,313 @@ Recorded results were as follows:
   "unchanged_count": 0
 }
 
-Execution time and analytical results may vary when using a different file, as the system computes results from the current database content on each run.
+```
 
+*Execution time and analytical results may vary when using a different file, as the system computes results from the current database content on each run.*
 
+## 10. Final Phase Requirements
 
-10. Final Phase Requirements
 The final phase adds seven points to the midterm project and includes:
 
-39	Queries, indexes, and Explain statistics.
-40	Aggregation reports.
-41	Materialized views.
-42	Scheduled jobs.
-43	FastAPI interface.
-44	GitHub documentation, README, env template, and reproducibility.
+* Queries, indexes, and Explain statistics.
 
-Midterm functionality remains inside the same repository; the final phase expands rather than replaces it.
+* Aggregation reports.
 
+* Materialized views.
 
+* Scheduled jobs.
 
-11. Queries and Indexes
-11.1 Required Indexes
-The file src/indexes.py creates at least three primary indexes:
+* FastAPI interface.
 
-45	Unique index on orders_validated:
+* GitHub documentation, README, env template, and reproducibility.
 
-("order_id", ASCENDING)
+*(Midterm functionality remains inside the same repository; the final phase expands rather than replaces it.)*
 
-46	Prevents duplicate order IDs and supports direct lookup.
-47	Single-field index on orders_quarantine:
+## 11. Queries and Indexes
 
-("record_status", ASCENDING)
+### 11.1 Required Indexes
 
-48	Speeds filtering of quarantined records by status.
-49	Compound index on orders_validated:
+The file `src/indexes.py` creates at least three primary indexes:
 
-[("order_date", DESCENDING), ("status", ASCENDING)]
+* **Unique index on `orders_validated`:** `("order_id", ASCENDING)`
 
-50	Supports queries that combine date and status.
+  * Prevents duplicate order IDs and supports direct lookup.
 
-record_status is used because it matches the actual field in the quarantine record structure. Index names must match the stored MongoDB field names exactly.
+* **Single-field index on `orders_quarantine`:** `("record_status", ASCENDING)`
 
-11.2 Index Rationale
-•	order_id: fast direct lookup and duplicate prevention.
-•	record_status: fast filtering for quarantined records.
-•	order_date + status: support combined date/status lookups.
+  * Speeds filtering of quarantined records by status.
 
-11.3 Creating Indexes
+* **Compound index on `orders_validated`:** `[("order_date", DESCENDING), ("status", ASCENDING)]`
+
+  * Supports queries that combine date and status.
+
+### 11.2 Index Rationale
+
+* `order_id`: fast direct lookup and duplicate prevention.
+
+* `record_status`: fast filtering for quarantined records.
+
+* `order_date` + `status`: support combined date/status lookups.
+
+### 11.3 Creating Indexes
+
 Via API:
 
+```
 POST /indexes
+
+```
 
 Or directly:
 
+```
 python src/indexes.py
 
-11.4 Five Practical Queries
-Query name	Purpose
-q1_search_by_id	Search by order_id.
-q2_date_and_status	Search by date and status using the compound index.
-q3_quarantine_errors	Search in quarantine records by record_status.
-q4_wallet_payments	Return a sample of orders paid via wallet.
-q5_city_search	Search orders by city.
-11.5 Explain Statistics
-Collect performance info for the first three queries using:
+```
 
-explain("executionStats")
+### 11.4 Five Practical Queries
 
-The response may include:
+| Query Name | Purpose | 
+| ----- | ----- | 
+| `q1_search_by_id` | Search by `order_id`. | 
+| `q2_date_and_status` | Search by date and status using the compound index. | 
+| `q3_quarantine_errors` | Search in quarantine records by `record_status`. | 
+| `q4_wallet_payments` | Return a sample of orders paid via wallet. | 
+| `q5_city_search` | Search orders by city. | 
 
-•	executionTimeMillis — execution time.
-•	totalDocsExamined — number of documents examined.
-•	totalKeysExamined — number of index keys examined.
-•	nReturned — number of returned results.
-•	the chosen execution plan.
+### 11.5 Explain Statistics
 
-To show the index effect, run the queries before and after index creation, then compare execution time and the number of documents and index keys examined.
+Collect performance info for the first three queries using `explain("executionStats")`. The response may include:
 
-Example requests:
+* `executionTimeMillis` — execution time.
 
+* `totalDocsExamined` — number of documents examined.
+
+* `totalKeysExamined` — number of index keys examined.
+
+* `nReturned` — number of returned results.
+
+* the chosen execution plan.
+
+**Example requests:**
+
+```
 GET /queries/q1_search_by_id
 GET /queries/q2_date_and_status
 GET /queries/q3_quarantine_errors
 GET /queries/q4_wallet_payments
 GET /queries/q5_city_search
 
+```
 
+## 12. Aggregation Reports
 
-12. Aggregation Reports
-src/aggregations_final.py provides at least five reports based on live MongoDB data:
+`src/aggregations_final.py` provides at least five reports based on live MongoDB data:
 
-Report	Description
-top_cities	Count of orders aggregated by city.
-order_status	Distribution of orders by status.
-payment_methods	Usage of payment methods.
-busy_days	Count of orders aggregated by day.
-top_customers	Ranking of customers by order count.
-Running Reports
-List available reports:
+| Report | Description | 
+| ----- | ----- | 
+| `top_cities` | Count of orders aggregated by city. | 
+| `order_status` | Distribution of orders by status. | 
+| `payment_methods` | Usage of payment methods. | 
+| `busy_days` | Count of orders aggregated by day. | 
+| `top_customers` | Ranking of customers by order count. | 
 
+**Running Reports:**
+
+```
 GET /aggregations
-
-Run a specific report:
-
 GET /aggregations/top_cities
 GET /aggregations/order_status
 GET /aggregations/payment_methods
 GET /aggregations/busy_days
 GET /aggregations/top_customers
 
-Each report has a clear name and an independent aggregation pipeline, and returns a JSON response built from current DB data, not from precomputed static results.
+```
 
+## 13. Materialized Views
 
-13. Materialized Views
 The project includes two primary materialized views:
 
-51	daily_sales_mv
-◦	Summarizes orders and sales by day.
-52	city_sales_mv
-◦	Summarizes orders and sales by city.
+* `daily_sales_mv`: Summarizes orders and sales by day.
 
-13.1 Incremental Update
-Views are refreshed using aggregation pipelines that use $merge. This merges new or modified results into the materialized collection instead of deleting and rebuilding the entire view each time.
+* `city_sales_mv`: Summarizes orders and sales by city.
 
-This approach allows updating results as new data arrives while keeping analytical results available for fast queries.
+### 13.1 Incremental Update
 
-13.2 Refreshing Views
+Views are refreshed using aggregation pipelines that use `$merge`. This merges new or modified results into the materialized collection instead of deleting and rebuilding the entire view each time.
+
+### 13.2 Refreshing Views
+
+```
 POST /refresh-mv
 
-The endpoint returns the operation status and samples from:
+```
 
-•	daily_sales_mv.
-•	city_sales_mv.
+*The endpoint returns the operation status and samples from both materialized views.*
 
-14. Scheduled Jobs
+## 14. Scheduled Jobs
+
 The project provides two real scheduled jobs:
 
-14.1 update_views
-Refreshes the materialized views, including:
+### 14.1 `update_views`
 
-•	daily_sales_mv.
-•	city_sales_mv.
+Refreshes the materialized views, including `daily_sales_mv` and `city_sales_mv`.
 
-14.2 generate_report
-Generates periodic JSON reports and stores them in the reports folder.
+### 14.2 `generate_report`
 
-14.3 Job Logging
-Each job is logged into the jobs_log collection with:
+Generates periodic JSON reports and stores them in the `reports` folder.
 
-•	job name.
-•	start time.
-•	end time.
-•	status: success or failed.
-•	error message if any.
-•	result details on success.
+### 14.3 Job Logging
 
-14.4 Manual Execution
-List recent job logs:
+Each job is logged into the `jobs_log` collection with job name, start time, end time, status, error messages, and result details.
 
+### 14.4 Manual Execution
+
+```
 GET /jobs
-
-Run the views update job manually:
-
 POST /jobs/update_views/run
-
-Run the report generation job manually:
-
 POST /jobs/generate_report/run
 
-The db_scheduled_jobs.py file contains scheduling logic and can run jobs according to schedules specified in settings.
+```
 
+## 15. FastAPI Interface
 
+### 15.1 Running the API
 
-15. FastAPI Interface
-15.1 Running the API
-You can run the app with Uvicorn:
-
+```
 python -m uvicorn src.api:app --reload
-
-You can also run the file directly if supported by the application:
-
+# OR
 python src/api.py
 
-15.2 Swagger UI
-After starting the server open:
+```
 
-http://127.0.0.1:8000/docs
+### 15.2 Swagger UI
 
-Swagger includes the following sections:
+After starting the server open: `http://127.0.0.1:8000/docs`
 
-•	Core operations.
-•	Queries.
-•	Aggregations.
-•	Materialized views.
-•	Scheduled jobs.
+### 15.3 API Endpoints
 
-15.3 API Endpoints
-Method	Endpoint	Purpose
-GET	/health	Check service and DB health.
-POST	/ingest	Trigger the existing ingestion pipeline.
-POST	/indexes	Create the required indexes.
-GET	/queries	List available queries.
-GET	/queries/{name}	Run a specific query.
-GET	/aggregations	List available reports.
-GET	/aggregations/{name}	Run a specific aggregation report.
-POST	/refresh-mv	Refresh materialized views.
-GET	/jobs	List job execution logs.
-POST	/jobs/{name}/run	Run a specific job manually.
-All responses are JSON. The API delegates real work to the project modules rather than duplicating execution inside api.py.
+| Method | Endpoint | Purpose | 
+| ----- | ----- | ----- | 
+| **GET** | `/health` | Check service and DB health. | 
+| **POST** | `/ingest` | Trigger the existing ingestion pipeline. | 
+| **POST** | `/indexes` | Create the required indexes. | 
+| **GET** | `/queries` | List available queries. | 
+| **GET** | `/queries/{name}` | Run a specific query. | 
+| **GET** | `/aggregations` | List available reports. | 
+| **GET** | `/aggregations/{name}` | Run a specific aggregation report. | 
+| **POST** | `/refresh-mv` | Refresh materialized views. | 
+| **GET** | `/jobs` | List job execution logs. | 
+| **POST** | `/jobs/{name}/run` | Run a specific job manually. | 
 
-16. Suggested Test Sequence
-Step 1 — Start MongoDB
-Ensure MongoDB is available at:
+## 16. Suggested Test Sequence
 
-mongodb://localhost:27017/
+ 1. **Start MongoDB**: Ensure MongoDB is available at `mongodb://localhost:27017/`
 
-Step 2 — Install Dependencies and Setup
-pip install -r requirements.txt
-cp .env.example .env
+ 2. **Install Dependencies**: `pip install -r requirements.txt` & `cp .env.example .env`
 
-Step 3 — Load Data
-python src/main.py
+ 3. **Load Data**: `python src/main.py`
 
-Step 4 — Run the API
-python src/api.py
+ 4. **Run the API**: `python src/api.py`
 
-Step 5 — Health Check
-GET /health
+ 5. **Health Check**: `GET /health`
 
-Step 6 — Create Indexes
-POST /indexes
+ 6. **Create Indexes**: `POST /indexes`
 
-Step 7 — Test Queries
-GET /queries
-GET /queries/q1_search_by_id
-GET /queries/q2_date_and_status
-GET /queries/q3_quarantine_errors
-GET /queries/q4_wallet_payments
-GET /queries/q5_city_search
+ 7. **Test Queries**: `GET /queries/...`
 
-Step 8 — Test Aggregations
-GET /aggregations
-GET /aggregations/top_cities
-GET /aggregations/order_status
-GET /aggregations/payment_methods
-GET /aggregations/busy_days
-GET /aggregations/top_customers
+ 8. **Test Aggregations**: `GET /aggregations/...`
 
-Step 9 — Refresh Materialized Views
-POST /refresh-mv
+ 9. **Refresh Materialized Views**: `POST /refresh-mv`
 
-Step 10 — Test Scheduled Jobs
-POST /jobs/update_views/run
-POST /jobs/generate_report/run
-GET /jobs
+10. **Test Scheduled Jobs**: `POST /jobs/.../run`
 
-Step 11 — Run Automated Tests
-pytest -q
+11. **Run Automated Tests**: `pytest -q`
 
+## 17. Reproducibility and Dynamic Input
 
+The project does not rely on a fixed filename, fixed row count, prewritten analytical results, specific data values, or developer-specific absolute paths. When a different valid input file is provided, the system recomputes the entire pipeline based on the new data.
 
-17. Reproducibility and Dynamic Input
-The project does not rely on:
+## 18. Reports and Outputs
 
-•	A single fixed filename.
-•	A fixed row count.
-•	Prewritten analytical results.
-•	A specific city or customer.
-•	Training dataset only.
-•	Developer-specific absolute paths.
+Execution outputs are stored in the `reports` folder. Examples include:
 
-When a different valid input file is provided, the system recomputes the entire pipeline, reports, indexes, materialized views, and execution metrics based on the new data.
+* `results.json`: processing metrics and run log.
 
+* payment and analytics reports.
 
+* PySpark processing results.
 
-18. Reports and Outputs
-Execution outputs are stored in the reports folder. Examples include:
+* scheduled job logs.
 
-•	results.json: processing metrics and run log.
-•	payment and analytics reports.
-•	PySpark processing results.
-•	scheduled job logs.
+## 19. Coverage of Evaluation Requirements
 
-It is recommended to use a single results.json file containing a list of run records rather than creating a separate report file for each run.
+| Requirement | Points / Weight | 
+| ----- | ----- | 
+| Midterm project baseline | 18 | 
+| Queries, indexes, and Explain | 1.5 | 
+| Aggregation reports | 1.5 | 
+| Materialized views | 1.0 | 
+| Scheduled jobs | 1.0 | 
+| FastAPI API | 0.75 | 
+| GitHub, README, reproducibility | 0.50 | 
+| Discussion & understanding | 0.25 | 
+| **Final phase additions** | **7** | 
+| **Total** | **25** | 
 
-A run record may include:
+*(A dashboard is optional and not required by the final phase criteria listed.)*
 
-•	run_id.
-•	input filename.
-•	selected engine.
-•	rows read.
-•	raw rows loaded.
-•	counts of validated, corrected, and quarantined records.
-•	elapsed time.
-•	throughput.
-•	counts of inserted and updated records.
-•	error distribution.
+## 20. Discussion Questions and Answers
 
+* **Why does the project use two processing engines?**
+  Python Batch is suitable for small files because it is lightweight and fast in that range. PySpark is used for large files because it supports parallel processing and partition-based execution.
 
-19. Coverage of Evaluation Requirements
-Requirement	Points / Weight
-Midterm project baseline	18
-Queries, indexes, and Explain	1.5
-Aggregation reports	1.5
-Materialized views	1.0
-Scheduled jobs	1.0
-FastAPI API	0.75
-GitHub, README, reproducibility	0.50
-Discussion & understanding	0.25
-Final phase additions	7
-Total	25
-A dashboard is optional and not required by the final phase criteria listed.
+* **Why store raw data separately?**
+  Keeping the original data in `orders_raw` preserves traceability and allows review and reprocessing later without losing the original source.
 
+* **What is the difference between a corrected record and a quarantined record?**
+  A corrected record contains an error that can be safely fixed; a quarantined record contains a critical or conflicting error that cannot be fixed without risking data integrity.
 
-20. Discussion Questions and Answers
-Why does the project use two processing engines?
-Python Batch is suitable for small files because it is lightweight and fast in that range. PySpark is used for large files because it supports parallel processing and partition-based execution.
+* **Why create a compound index?**
+  Some queries filter by more than one field, such as `order_date` and `status`. The compound index supports these queries and reduces the number of unnecessary documents MongoDB must scan.
 
-Why store raw data separately?
-Keeping the original data in orders_raw preserves traceability and allows review and reprocessing later without losing the original source.
+* **How is the index effect demonstrated?**
+  Run the query with `explain("executionStats")` before and after creating the index, then compare execution time and the number of documents and index keys examined.
 
-What is the difference between a corrected record and a quarantined record?
-A corrected record contains an error that can be safely fixed; a quarantined record contains a critical or conflicting error that cannot be fixed without risking data integrity.
+* **Why use materialized views?**
+  Recomputing reports like daily sales or city sales on every request can be expensive. Materialized views store reusable analytical results, making repeated reads faster.
 
-Why create a compound index?
-Some queries filter by more than one field, such as order_date and status. The compound index supports these queries and reduces the number of unnecessary documents MongoDB must scan.
+* **What does incremental update mean?**
+  It means merging new or modified aggregation results into the materialized collection using `$merge` instead of rebuilding the whole view manually.
 
-How is the index effect demonstrated?
-Run the query with explain("executionStats") before and after creating the index, then compare execution time and the number of documents and index keys examined.
+* **Is this API a separate backend?**
+  No. It is a unified interface to run and test project functions via JSON and Swagger, in accordance with the project specifications.
 
-Why use materialized views?
-Recomputing reports like daily sales or city sales on every request can be expensive. Materialized views store reusable analytical results, making repeated reads faster.
+## 21. Conclusion
 
-What does incremental update mean?
-It means merging new or modified aggregation results into the materialized collection using $merge instead of rebuilding the whole view manually.
+The project provides a complete pipeline starting from file ingestion, engine selection, raw data storage, quality validation, correction, quarantine, organized storage, then querying and analysis, and finally operation through an API. The design is modular, reproducible, and suitable for evaluation via Swagger UI.
 
-How do you verify a job succeeded?
-Each job writes start time, end time, status, and optional error details to jobs_log. The log can be viewed via GET /jobs.
+## 22. Quick Run and Tests
 
-Why is api.py relatively short?
-The API is intentionally a thin execution layer. Indexing, querying, aggregations, materialized views, and scheduled jobs reside in separate modules, enabling modular design and avoiding code duplication.
+**Run API tests only:**
 
-Is this API a separate backend?
-No. It is a unified interface to run and test project functions via JSON and Swagger, in accordance with the project specifications.
-
-
-21. Conclusion
-The project provides a complete pipeline starting from file ingestion, engine selection, raw data storage, quality validation, correction, quarantine, organized storage, then querying and analysis, and finally operation through an API.
-
-The midterm phase demonstrates data engineering and ELT using Python Batch and PySpark. The final phase extends the repository by adding indexes, explainable queries, aggregation reports, incrementally updated materialized views, scheduled jobs, and a documented FastAPI interface.
-
-The design is modular, reproducible, and suitable for evaluation via Swagger UI. It avoids static results and supports different datasets, making it more reliable and scalable.
-
-
-
-22. Quick Run and Tests
-Run API tests only
+```
 python -m pytest -q api.py
 
-Show test results with details
+```
+
+**Show test results with details:**
+
+```
 python -m pytest -v src/api.py
 
-What do these tests verify?
-The tests ensure that:
+```
 
-•	The FastAPI app can be imported successfully.
-•	GET /health works correctly.
-•	GET /queries works correctly.
-•	GET /jobs works correctly.
-•	Responses are returned as JSON.
-•	Endpoints return expected HTTP codes.
+*(Do not run python tests directly to execute tests; running the file directly may not automatically run test functions. Use pytest instead.)*
 
-If you see:
+**Shortcut commands:**
 
-3 passed
-
-it indicates the basic API tests passed successfully.
-
-Difference between main run commands
-Command	Purpose
-python src/main.py	Run the pipeline and process the input file.
-python src/api.py	Run FastAPI and Swagger UI if direct run is supported.
-Full execution order
-1. Start MongoDB
-Ensure MongoDB is running at:
-
-mongodb://localhost:27017/
-
-2. Run the data pipeline
-python src/main.py
-
-This command reads the input file, selects the appropriate engine, processes the data, and stores results in MongoDB.
-
-3. Run the FastAPI app
-Open a second PowerShell window and run:
-
-python src/api.py --reload
-
-4. Open Swagger UI
-Open in your browser:
-
-http://127.0.0.1:8000/docs
-
-Use Swagger to interactively test API endpoints.
-
-5. Run API tests
-Open a third PowerShell window and run:
-
-python src/api.py
-
-Do not run python tests/test_api.py directly to execute tests; running the file directly may not automatically run functions named with the test_ prefix. Use pytest instead.
-
-Shortcut commands
+```
 # Install dependencies
 pip install -r requirements.txt
  
@@ -883,35 +875,33 @@ python src/main.py
 # Run API
 python src/api.py
 
-# Open Swagger UI
+# Open Swagger UI in browser:
 # http://127.0.0.1:8000/docs
 
+```
 
+## Screenshots and Documentation
 
-Screenshots and Documentation
-Project Structure
-[Image failed to load: Project Structure]
+* **Project Structure**
+  
 
-Pipeline Execution
-[Image failed to load: Pipeline Execution]
+* **Pipeline Execution**
+  
 
-Pipeline Results
-[Image failed to load: Pipeline Results]
+* **Pipeline Results**
+  
 
-FastAPI & Swagger Documentation
-[Image failed to load: Swagger API]
+* **FastAPI & Swagger Documentation**
+  
 
-Indexes
-[Image failed to load: Indexes]
+* **Indexes**
+  
 
-Aggregation Reports
-[Image failed to load: Aggregation Result]
+* **Aggregation Reports**
+  
 
-Materialized Views
-[Image failed to load: Materialized Views]
+* **Materialized Views**
+  
 
-Scheduled Jobs
-[Image failed to load: Scheduled Jobs]
-
-
-Note: All requirements, information, examples, commands, endpoints, and results from the original document have been preserved. The content was translated into English and organized to provide a functional description of each major project file.
+* **Scheduled Jobs**
+  
