@@ -2,7 +2,7 @@
 Author: Aiham Alqasem — أيهم ال قاسم
 Course: Big Data (Practical) — Midterm Project and Final Phase (Phase I & II)
 
-
+ 
 Table of Contents
 1	Overview and High-level Architecture
 2	Project Objectives
