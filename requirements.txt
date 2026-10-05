@@ -8,7 +8,18 @@
 pymongo>=4.4.0
 pyspark>=3.5.1
 Python >= 3.12
+# ==========================================
+# Big Data ELT Pipeline & Analytics API
+# ==========================================
 
+# 1. API & Web Framework (Phase 2)
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+
+
+# 4. Background Job Scheduler
+apscheduler>=3.10.0
 # ============================================================================
 # Technical Notes for Contributors:
 # 1. Standard Libraries: Modules such as os, sys, json, csv, re, time, 
