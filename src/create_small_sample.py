@@ -35,4 +35,4 @@ def create_sample(input_path, output_path, num_rows):
 
 if __name__ == "__main__":
     print("Starting sample extraction...")
-    create_sample(HUGE_CSV_PATH, SAMPLE_CSV_PATH, SAMPLE_ROWS)
+    create_sample(HUGE_CSV_PATH, SAMPLE_ROWS,10000)
