@@ -1,6 +1,6 @@
-🚀 Big Data Pipeline and Advanced Analytics Project
-Author: Aiham Alqasem — أيهم ال قاسم
-Course: Big Data (Practical) — Midterm Project and Final Phase (Phase I & II)
+# 🚀 Big Data Pipeline and Advanced Analytics Project
+## Author: Aiham Alqasem — أيهم ال قاسم
+## Course: Big Data (Practical) — Midterm Project and Final Phase (Phase I & II)
 
  
 Table of Contents
