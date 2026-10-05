@@ -1,6 +1,5 @@
 import csv
 import time
-import re
 from datetime import datetime
 from pymongo import MongoClient
 import sys
@@ -11,14 +10,14 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config.settings import MONGO_URI, MONGO_DB_NAME, BATCH_SIZE
 from src.metrics import save_run_metrics
 
-# تحديد اسم المجموعة بشكل ثابت
-TARGET_COLLECTION = "order_raw"
+# تم تعديل اسم المجموعة ليتطابق تماماً مع متطلبات الوثيقة
+TARGET_COLLECTION = "orders_raw"
 
-def load_with_python_batch(file_path, id_run):
+def load_with_python_batch(file_path, run_id):
     """
     يقرأ ملف CSV بصورة تدفقية (Streaming) ويرفعه إلى MongoDB باستخدام insert_many.
     """
-    print(f"\n--- Starting Python Batch Streaming Load for Run ID: {id_run} ---")
+    print(f"\n--- Starting Python Batch Streaming Load for Run ID: {run_id} ---")
     start_time = time.time()
     
     # 1. الاتصال بقاعدة البيانات
@@ -37,23 +36,21 @@ def load_with_python_batch(file_path, id_run):
         with open(file_path, 'r', encoding='utf-8-sig') as f:
             reader = csv.DictReader(f)
             
-            # 🎯 تنظيف أسماء الأعمدة (الترويسة) من المسافات الخفية
+            # 🎯 تنظيف أسماء الأعمدة (الترويسة) من المسافات الخفية (مقبول لأنه يخص الهيكل وليس البيانات)
             if reader.fieldnames:
                 reader.fieldnames = [field.strip() if field else field for field in reader.fieldnames]
             
             for row_number, row in enumerate(reader, start=1):
-                # 🎯 تنظيف واستخراج الأرقام فقط من order_id
-                if "order_id" in row and row["order_id"]:
-                    row["order_id"] = re.sub(r'[^\d]', '', str(row["order_id"]))
-
-                # 3. بناء الميتاداتا والسجل الخام 
+                # ❌ تم إزالة كود تنظيف order_id من هنا ليتم تطبيقه في طبقة Transform & Quality لاحقاً
+                
+                # 3. بناء الميتاداتا والسجل الخام (تم توحيد الأسماء لتتطابق مع الوثيقة)
                 raw_document = {
-                    "id_run": id_run,
-                    "file_source": file_name,
-                    "number_row_source": row_number,
-                    "at_ingested": datetime.utcnow(),
+                    "run_id": run_id, 
+                    "source_file": file_name,
+                    "source_row_number": row_number,
+                    "ingested_at": datetime.utcnow(),
                     "engine_used": "python_batch",
-                    "record_raw": row 
+                    "raw_record": row 
                 }
                 
                 batch.append(raw_document)
@@ -99,7 +96,7 @@ def load_with_python_batch(file_path, id_run):
     }
     
     batch_report = {
-        "id_run": id_run,
+        "run_id": run_id,
         "execution_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "phase": "Ingestion_Python_Batch",
         "metrics": metrics,
@@ -132,5 +129,5 @@ def _insert_batch(collection, batch, batch_number):
 
 if __name__ == "__main__":
     from config.settings import SAMPLE_CSV_PATH
-    test_id_run = "batch_test_run_001"
-    load_with_python_batch(SAMPLE_CSV_PATH, test_id_run)
+    test_run_id = "batch_test_run_001"
+    load_with_python_batch(SAMPLE_CSV_PATH, test_run_id)
